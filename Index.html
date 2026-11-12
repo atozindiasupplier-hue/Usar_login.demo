@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horizon Gym - Member Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #0d100f;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .login-card {
+      background-color: #171a19;
+      width: 100%;
+      max-width: 390px;
+      padding: 28px 22px;
+      border-radius: 18px;
+      border: 1px solid #262a29;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #5eead4;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-header p {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #333836;
+      background-color: #0d100f;
+      color: #ffffff;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #5eead4;
+    }
+
+    /* WhatsApp Number + Right Side Get OTP Button */
+    .phone-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .phone-row input {
+      flex: 1;
+    }
+
+    .btn-otp {
+      padding: 0 14px;
+      background-color: #0f766e;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-otp:active {
+      background-color: #115e59;
+    }
+
+    .btn-otp:disabled {
+      background-color: #334155;
+      cursor: not-allowed;
+    }
+
+    /* OTP Section (Get OTP dabane ke baad khulega) */
+    .otp-section {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #262a29;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .btn-final-login {
+      width: 100%;
+      padding: 13px;
+      background-color: #5eead4;
+      color: #0d100f;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-final-login:active {
+      background-color: #2dd4bf;
+    }
+
+    .status-box {
+      display: none;
+      margin-top: 16px;
+      padding: 11px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-success {
+      display: block;
+      background-color: rgba(34, 197, 94, 0.15);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+    }
+
+    .status-error {
+      display: block;
+      background-color: rgba(239, 68, 68, 0.15);
+      border: 1px solid #ef4444;
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="brand-header">
+      <h1>HORIZON GYM</h1>
+      <p>Member Registration & Login</p>
+    </div>
+
+    <form id="userLoginForm">
+      <!-- 1. Full Name -->
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" placeholder="Enter your full name" required />
+      </div>
+
+      <!-- 2. WhatsApp Number + Get OTP Button -->
+      <div class="form-group">
+        <label for="whatsappNumber">WhatsApp Mobile Number</label>
+        <div class="phone-row">
+          <input type="tel" id="whatsappNumber" placeholder="10-digit WhatsApp no." maxlength="10" required />
+          <button type="button" class="btn-otp" id="getOtpBtn">Get OTP</button>
+        </div>
+      </div>
+
+      <!-- 3. OTP Input & Final Login Button (Hidden initially) -->
+      <div class="otp-section" id="otpSection">
+        <div class="form-group">
+          <label for="otpInput">Enter WhatsApp OTP</label>
+          <input type="number" id="otpInput" placeholder="Enter 4 or 6 digit OTP" />
+        </div>
+
+        <button type="submit" class="btn-final-login" id="finalLoginBtn">Verify & Login</button>
+      </div>
+    </form>
+
+    <div id="statusBox" class="status-box"></div>
+  </div>
+
+  <script>
+    const getOtpBtn = document.getElementById('getOtpBtn');
+    const otpSection = document.getElementById('otpSection');
+    const userLoginForm = document.getElementById('userLoginForm');
+    const finalLoginBtn = document.getElementById('finalLoginBtn');
+    const statusBox = document.getElementById('statusBox');
+
+    // Yahan apne API endpoints daal dena
+    const SEND_OTP_API = '';
+    const VERIFY_LOGIN_API = '';
+    const USER_DASHBOARD_PAGE = 'user-dashboard.html';
+
+    // Step 1: Get OTP Button Click
+    getOtpBtn.addEventListener('click', async function () {
+      const fullName = document.getElementById('fullName').value.trim();
+      const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+
+      if (!fullName || whatsappNumber.length < 10) {
+        statusBox.textContent = '⚠️ Please enter Full Name and valid WhatsApp Number';
+        statusBox.className = 'status-box status-error';
+        return;
+      }
+
+      getOtpBtn.textContent = 'Sending...';
+      getOtpBtn.disabled = true;
+      statusBox.style.display = 'none';
+
+      // OTP Section ko niche open/navigate kar dena
+      otpSection.style.display = 'block';
+      document.getElementById('otpInput').required = true;
+      document.getElementById('otpInput').focus();
+
+      try {
+        const response = await fetch(SEND_OTP_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, whatsappNumber })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          statusBox.textContent = '✅ OTP Sent to your WhatsApp!';
+          statusBox.className = 'status-box status-success';
+        } else {
+          statusBox.textContent = data.message || '❌ Failed to send OTP';
+          statusBox.className = 'status-box status-error';
+        }
+      } catch (error) {
+        statusBox.textContent = '⚠️ API Connection Error (Connect SEND_OTP_API)';
+        statusBox.className = 'status-box status-error';
+      } finally {
+        getOtpBtn.textContent = 'Resend OTP';
+        getOtpBtn.disabled = false;
+      }
+    });
+
+    // Step 2: Final OTP Verify & Login
+    userLoginForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+      const otp = document.getElementById('otpInput').value.trim();
+
+      if (!otp) {
+        statusBox.textContent = '⚠️ Please enter the OTP';
+        statusBox.className = 'status-box status-error';
+        return;
+      }
+
+      finalLoginBtn.textContent = 'Verifying...';
+      finalLoginBtn.disabled = true;
+      statusBox.style.display = 'none';
+
+      try {
+        const response = await fetch(VERIFY_LOGIN_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, whatsappNumber, otp })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          statusBox.textContent = '✅ Login Successful! Redirecting...';
+          statusBox.className = 'status-box status-success';
+          setTimeout(() => {
+            window.location.href = USER_DASHBOARD_PAGE;
+          }, 800);
+        } else {
+          statusBox.textContent = '❌ Invalid OTP';
+          statusBox.className = 'status-box status-error';
+        }
+      } catch (error) {
+        statusBox.textContent = '⚠️ API Connection Error (Connect VERIFY_LOGIN_API)';
+        statusBox.className = 'status-box status-error';
+      } finally {
+        finalLoginBtn.textContent = 'Verify & Login';
+        finalLoginBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+  </html>
+  
